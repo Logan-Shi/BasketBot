@@ -72,6 +72,7 @@ int32_t PLATE_MAX_SPEED = 500;
 int32_t set_spd = 0;
 int32_t FRIC_MAX_SPEED = 4000;
 int32_t CM_MAX_SPEED = 2000;
+uint8_t rec[20];
 
 static int key_sta = 0;
 int speed_step_sign = +1;
@@ -157,12 +158,13 @@ int main(void)
   MX_DMA_Init();
   MX_CAN1_Init();
   MX_USART1_UART_Init();
+	MX_USART6_UART_Init();
   MX_TIM1_Init();
 
   /* USER CODE BEGIN 2 */
   my_can_filter_init_recv_all(&hcan1);     //配置CAN过滤器
   HAL_CAN_Receive_IT(&hcan1, CAN_FIFO0);   //启动CAN接收中断
-  HAL_UART_Receive_IT_IDLE(&huart1,UART_Buffer,100);   //启动串口接收
+  //HAL_UART_Receive_IT_IDLE(&huart1,UART_Buffer,100);   //启动串口接收
 
   HAL_TIM_IC_Start_DMA(&htim1,TIM_CHANNEL_2,(uint32_t *)TIM_COUNT,2);
 	get_moto_offset(&moto_chassis[2],&hcan1);
@@ -202,7 +204,8 @@ int main(void)
 			gm_pos = 0;
     }else{
       fric_speed = FRIC_MAX_SPEED/2;
-			plate_speed = remote_control.ch4*PLATE_MAX_SPEED/660;
+			//plate_speed = remote_control.ch4*PLATE_MAX_SPEED/660;
+			plate_speed = 100;
 			cm_speed_forw = remote_control.ch2*CM_MAX_SPEED/660;
 			cm_speed_left = remote_control.ch3*CM_MAX_SPEED/660;
 			cm_speed_rotate = remote_control.ch1*CM_MAX_SPEED/(660*2);
@@ -214,6 +217,9 @@ int main(void)
 			else if(gm_pos < -8000) gm_pos = -8000;
     }
 		//TODO: gm_pos = gm_pos_calc();
+		//for(int i=0;i<20;i++)
+		//{rec[i]='\0';}
+		HAL_UART_Receive_IT(&huart6,(uint8_t*)rec,12);
 		
 		//计算pid目标值
 		//friction wheel
@@ -254,7 +260,8 @@ int main(void)
                            motor_pid[1].output,
                            motor_pid[2].output,
                            motor_pid[3].output);
-    HAL_Delay(1);      //PID控制频率
+		
+    HAL_Delay(1);      //PID控制频率                                                            Delay要注意修改
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
@@ -386,5 +393,9 @@ void assert_failed(uint8_t* file, uint32_t line)
 /**
   * @}
 */ 
-
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+	UNUSED(huart);
+	HAL_UART_Transmit(&huart6,(uint8_t*)rec,12,0XFFFF);
+}
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

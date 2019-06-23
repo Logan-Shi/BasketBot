@@ -241,7 +241,7 @@ void USART6_IRQHandler(void)
   
   /*< 注意！ 由于使用了串口空闲中断，HAL库中默认的回调函数无法处理，所以需要加入下面自定义回调处理函数并且需要将默认回调屏蔽 >*/
   
-	HAL_UART_IDLE_IRQHandler(&huart6);
+	HAL_UART_IRQHandler(&huart6);
     
   /* USER CODE END USART1_IRQn 0 */
   //HAL_UART_IRQHandler(&huart1);
