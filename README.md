@@ -9,5 +9,5 @@ TODO
 - [] raspberry pi boot setup
 - [] rplidar and charger mount
 - [] aim algorithm
-	- [] distance data decode
+	- [x] distance data decode
 	- [] speed and angle calculation
