@@ -49,6 +49,7 @@
 #include "bsp_can.h"
 #include "pid.h"
 #include "Remote_Control.h"
+#include <cmath>
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -73,6 +74,7 @@ int32_t set_spd = 0;
 int32_t FRIC_MAX_SPEED = 4000;
 int32_t CM_MAX_SPEED = 2000;
 uint8_t rec[20];
+double distance = 0;
 
 static int key_sta = 0;
 int speed_step_sign = +1;
@@ -196,6 +198,26 @@ int main(void)
   while (1)
   {
 		get_total_angle(&moto_chassis[2]);
+		
+		for(int i=0;i<20;i++)
+		{rec[i]='\0';}
+		
+		HAL_UART_Receive_IT(&huart6,(uint8_t*)rec,12);
+		
+		for (int i = 0; i < 20; i++)
+		{
+			switch (i)
+			{
+				case 0:
+					distance += rec[i]-'0';
+					break;
+				case 1:
+					break;
+				default:
+					distance += (rec[i]-'0') * pow(0.1, i - 1);
+			}
+		}//read distance from rplidar
+		
     if(HAL_GetTick() - Latest_Remote_Control_Pack_Time >500){   //如果500ms都没有收到遥控器数据，证明遥控器可能已经离线，切换到按键控制模式。
       fric_speed = FRIC_MAX_SPEED/10;
 			cm_speed_forw = 0;
@@ -204,8 +226,9 @@ int main(void)
 			gm_pos = 0;
     }else{
       fric_speed = FRIC_MAX_SPEED/2;
-			//plate_speed = remote_control.ch4*PLATE_MAX_SPEED/660;
-			plate_speed = 100;
+			//TODO: fric_speed = fric_speed_calc();
+			plate_speed = remote_control.ch4*PLATE_MAX_SPEED/660;
+			//plate_speed = 100;
 			cm_speed_forw = remote_control.ch2*CM_MAX_SPEED/660;
 			cm_speed_left = remote_control.ch3*CM_MAX_SPEED/660;
 			cm_speed_rotate = remote_control.ch1*CM_MAX_SPEED/(660*2);
@@ -215,14 +238,12 @@ int main(void)
 			gm_pos = given_gm_pos;
 			if(gm_pos > +60000) gm_pos = +60000;
 			else if(gm_pos < -8000) gm_pos = -8000;
+			//TODO: gm_pos = gm_pos_calc();
     }
-		//TODO: gm_pos = gm_pos_calc();
-		//for(int i=0;i<20;i++)
-		//{rec[i]='\0';}
-		HAL_UART_Receive_IT(&huart6,(uint8_t*)rec,12);
+		
 		
 		//计算pid目标值
-		//friction wheel
+		//friction wheel 
 			fric_pid[0].target =  fric_speed*0.95;
 			fric_pid[1].target = -fric_speed;
 		//chasis motor
@@ -398,4 +419,5 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 	UNUSED(huart);
 	HAL_UART_Transmit(&huart6,(uint8_t*)rec,12,0XFFFF);
 }
+
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
