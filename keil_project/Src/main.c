@@ -229,7 +229,7 @@ int main(void)
 			}//read distance from rplidar
 			tmp_fric_speed=calc_speed(distance,350);
 		}
-    if(false)//(HAL_GetTick() - Latest_Remote_Control_Pack_Time >500)  //如果500ms都没有收到遥控器数据，证明遥控器可能已经离线，切换到按键控制模式。
+    if(HAL_GetTick() - Latest_Remote_Control_Pack_Time >500)  //如果500ms都没有收到遥控器数据，证明遥控器可能已经离线，切换到按键控制模式。
 		{   
       fric_speed = FRIC_MAX_SPEED/10;
 			cm_speed_forw = 0;
