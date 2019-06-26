@@ -4,10 +4,12 @@ BasketBot project for Design and Manufacture 1
 
 TODO
 ----
-- [] KT & ppt
-- [] several parts need printing
-- [] raspberry pi boot setup
-- [] rplidar and charger mount
-- [] aim algorithm
+- [x] KT & ppt
+- [x] several parts need printing
+- [x] raspberry pi boot setup
+- [ ] rplidar and charger mount
+- [ ] plate redesign
+- [ ] param experiment
+- [x] aim algorithm
 	- [x] distance data decode
-	- [] speed and angle calculation
+	- [x] speed and angle calculation

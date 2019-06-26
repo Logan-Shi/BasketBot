@@ -61,7 +61,8 @@ PID_TypeDef fric_pid[2];
 PID_TypeDef GMP_pos_pid;
 PID_TypeDef GMP_speed_pid;
 PID_TypeDef plate_pid;
-int32_t fric_speed = 0;
+int32_t fric_speed = 1600;
+int32_t tmp_fric_speed = 0; 
 int32_t cm_speed_forw = 0;
 int32_t cm_speed_left = 0;
 int32_t cm_speed_rotate = 0;
@@ -75,6 +76,7 @@ int32_t FRIC_MAX_SPEED = 4000;
 int32_t CM_MAX_SPEED = 2000;
 uint8_t rec[20];
 double distance = 0;
+int32_t calc_speed(double,double);
 
 static int key_sta = 0;
 int speed_step_sign = +1;
@@ -166,10 +168,13 @@ int main(void)
   /* USER CODE BEGIN 2 */
   my_can_filter_init_recv_all(&hcan1);     //配置CAN过滤器
   HAL_CAN_Receive_IT(&hcan1, CAN_FIFO0);   //启动CAN接收中断
-  //HAL_UART_Receive_IT_IDLE(&huart1,UART_Buffer,100);   //启动串口接收
+  HAL_UART_Receive_IT_IDLE(&huart1,UART_Buffer,100);   //启动串口接收
 
   HAL_TIM_IC_Start_DMA(&htim1,TIM_CHANNEL_2,(uint32_t *)TIM_COUNT,2);
 	get_moto_offset(&moto_chassis[2],&hcan1);
+	
+	for(int i=0;i<20;i++)
+		{rec[i]='0';}
 	/*< 初始化PID参数 >*/
   //chasis motor
 	for(int i=0; i<4; i++)
@@ -198,35 +203,44 @@ int main(void)
   while (1)
   {
 		get_total_angle(&moto_chassis[2]);
+		distance = 0;
 		
-		for(int i=0;i<20;i++)
-		{rec[i]='\0';}
 		
 		HAL_UART_Receive_IT(&huart6,(uint8_t*)rec,12);
 		
-		for (int i = 0; i < 20; i++)
+		if(rec[1]=='0')
 		{
-			switch (i)
+			tmp_fric_speed = fric_speed;
+		}
+		else
+		{
+			for (int i = 0; i < 20; i++)
 			{
-				case 0:
-					distance += rec[i]-'0';
-					break;
-				case 1:
-					break;
-				default:
-					distance += (rec[i]-'0') * pow(0.1, i - 1);
-			}
-		}//read distance from rplidar
-		
-    if(HAL_GetTick() - Latest_Remote_Control_Pack_Time >500){   //如果500ms都没有收到遥控器数据，证明遥控器可能已经离线，切换到按键控制模式。
+				switch (i)
+				{
+					case 0:
+						distance += rec[i]-'0';
+						break;
+					case 1:
+						break;
+					default:
+						distance += (rec[i]-'0') * pow(0.1, i - 1);
+				}
+			}//read distance from rplidar
+			tmp_fric_speed=calc_speed(distance,350);
+		}
+    if(false)//(HAL_GetTick() - Latest_Remote_Control_Pack_Time >500)  //如果500ms都没有收到遥控器数据，证明遥控器可能已经离线，切换到按键控制模式。
+		{   
       fric_speed = FRIC_MAX_SPEED/10;
 			cm_speed_forw = 0;
 			cm_speed_left = 0;
 			cm_speed_rotate = 0;
 			gm_pos = 0;
-    }else{
-      fric_speed = FRIC_MAX_SPEED/2;
-			//TODO: fric_speed = fric_speed_calc();
+    }
+		else
+		{
+      fric_speed = tmp_fric_speed;
+			//fric_speed = FRIC_MAX_SPEED/3;
 			plate_speed = remote_control.ch4*PLATE_MAX_SPEED/660;
 			//plate_speed = 100;
 			cm_speed_forw = remote_control.ch2*CM_MAX_SPEED/660;
@@ -244,7 +258,7 @@ int main(void)
 		
 		//计算pid目标值
 		//friction wheel 
-			fric_pid[0].target =  fric_speed*0.95;
+			fric_pid[0].target =  fric_speed;
 			fric_pid[1].target = -fric_speed;
 		//chasis motor
 		  motor_pid[0].target =   cm_speed_forw + cm_speed_left + cm_speed_rotate;
@@ -418,6 +432,17 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
 	UNUSED(huart);
 	HAL_UART_Transmit(&huart6,(uint8_t*)rec,12,0XFFFF);
+}
+
+int32_t calc_speed(double dis,double param)
+{
+	int32_t result = 1600;
+	if(dis<0.26)
+	{result=500;}
+	else
+	{result = param*sqrt(11.316*pow(dis, 2)/(dis-0.254));}
+	if(result>3000)result=3000;
+	return result;
 }
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
