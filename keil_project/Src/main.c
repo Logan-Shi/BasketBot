@@ -76,7 +76,7 @@ int32_t FRIC_MAX_SPEED = 4000;
 int32_t CM_MAX_SPEED = 2000;
 uint8_t rec[20];
 double distance = 0;
-double lidar_tf = 0.14;
+double lidar_tf = 0.04;
 int32_t calc_speed(double,double);
 
 static int key_sta = 0;
