@@ -61,8 +61,8 @@ PID_TypeDef fric_pid[2];
 PID_TypeDef GMP_pos_pid;
 PID_TypeDef GMP_speed_pid;
 PID_TypeDef plate_pid;
-int32_t fric_speed = 1600;
-int32_t tmp_fric_speed = 0; 
+int32_t fric_speed = 1200;
+int32_t tmp_fric_speed = 0;
 int32_t cm_speed_forw = 0;
 int32_t cm_speed_left = 0;
 int32_t cm_speed_rotate = 0;
@@ -76,6 +76,7 @@ int32_t FRIC_MAX_SPEED = 4000;
 int32_t CM_MAX_SPEED = 2000;
 uint8_t rec[20];
 double distance = 0;
+double lidar_tf = 0.14;
 int32_t calc_speed(double,double);
 
 static int key_sta = 0;
@@ -227,7 +228,8 @@ int main(void)
 						distance += (rec[i]-'0') * pow(0.1, i - 1);
 				}
 			}//read distance from rplidar
-			tmp_fric_speed=calc_speed(distance,350);
+			distance-=lidar_tf;
+			tmp_fric_speed=calc_speed(distance,323);
 		}
     if(HAL_GetTick() - Latest_Remote_Control_Pack_Time >500)  //如果500ms都没有收到遥控器数据，证明遥控器可能已经离线，切换到按键控制模式。
 		{   
@@ -436,11 +438,11 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 
 int32_t calc_speed(double dis,double param)
 {
-	int32_t result = 1600;
-	if(dis<0.26)
-	{result=500;}
+	int32_t result = 1200;
+	if(dis<0.3)
+	{result=2421;}
 	else
-	{result = param*sqrt(11.316*pow(dis, 2)/(dis-0.254));}
+	{result = param*sqrt(10.727*pow(dis, 2)/(dis-0.2857));}
 	if(result>3000)result=3000;
 	return result;
 }

@@ -9,7 +9,7 @@ TODO
 - [x] raspberry pi boot setup
 - [ ] rplidar and charger mount
 - [ ] plate redesign
-- [ ] param experiment
+- [x] param experiment
 - [x] aim algorithm
 	- [x] distance data decode
 	- [x] speed and angle calculation
